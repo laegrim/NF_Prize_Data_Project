@@ -14,6 +14,7 @@ jupyter==1.0.0
 jupyter-client==5.2.2
 jupyter-console==5.2.0
 jupyter-core==4.4.0
+jupyter-tensorboard==0.1.5
 Keras==2.1.4
 Markdown==2.6.11
 MarkupSafe==1.0
