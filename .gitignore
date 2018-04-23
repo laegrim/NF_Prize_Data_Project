@@ -1,1 +1,4 @@
-nf_prize_env/
+/data/*
+/data/imdb/
+/models/*
+/nf_prize_env/*
