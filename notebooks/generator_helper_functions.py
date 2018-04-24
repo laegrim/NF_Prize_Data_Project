@@ -5,16 +5,16 @@ from scipy import sparse
 #import scipy
 from scipy.sparse.linalg import svds
 
-with open('data/name_one_hot_dict.pickle', 'rb') as handle:
+with open('../data/name_one_hot_dict.pickle', 'rb') as handle:
     name_one_hot = pickle.load(handle)
     
-with open('data/mean_rating.pickle', 'rb') as handle:
+with open('../data/mean_rating.pickle', 'rb') as handle:
     mean_rating = pickle.load(handle)
     
-with open('data/median_rating.pickle', 'rb') as handle:
+with open('../data/median_rating.pickle', 'rb') as handle:
     median_rating = pickle.load(handle)
 
-with open('data/movie_var.pickle', 'rb') as handle:
+with open('../data/movie_var.pickle', 'rb') as handle:
     movie_var = pickle.load(handle)
     
 min_mean_movie = 1.2878787878787878
