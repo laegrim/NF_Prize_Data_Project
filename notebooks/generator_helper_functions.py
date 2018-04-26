@@ -30,6 +30,10 @@ year_range = year_end - year_one
 def user_vector(user_matrix, user_ids, user):
     return user_matrix[user_ids[user]]
 
+def movie_vector(movie_matrix, movie_ids, movie):
+    return user_matrix[user_ids[user]]
+
+
 def create_user_ids(dset):
     #make user id dictionary
     user_ids = list(set(dset[:,1]))
@@ -56,8 +60,11 @@ def create_user_maxtrix(training_data, user_ids, k_n = 50):
     # call Singular Value Decomposition
     U, sigma, Vt = svds(user_rating_matrix.asfptype(), k_n)
     
+    sigma = np.diag(sigma)
+
+    
     # return reduced dim matrix
-    return U * sigma
+    return np.dot(np.dot(U, sigma), Vt)
 
 def norm(max_val, min_val, val):
     return (val - min_val) / (max_val - min_val)
