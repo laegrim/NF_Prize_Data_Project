@@ -30,8 +30,8 @@ year_range = year_end - year_one
 def user_vector(user_matrix, user_ids, user):
     return user_matrix[user_ids[user]]
 
-def movie_vector(movie_matrix, movie_ids, movie):
-    return user_matrix[user_ids[user]]
+def movie_vector(movie_matrix, movie):
+    return movie_matrix[movie]
 
 
 def create_user_ids(dset):
@@ -61,6 +61,37 @@ def create_user_maxtrix(training_data, user_ids, k_n = 50):
     U, sigma, Vt = svds(user_rating_matrix.asfptype(), k_n)
     
     del user_rating_matrix
+    
+    sigma = np.diag(sigma)
+
+    print("shape of U: ", U.shape)
+    print("shape of sigma: ", sigma.shape)
+    # return reduced dim matrix
+    return np.dot(U, sigma)
+
+def norm(max_val, min_val, val):
+    return (val - min_val) / (max_val - min_val)
+
+def create_movie_matrix(training_data, user_ids, k_n = 75):
+    
+    movie_ids = list(range(0, 17771))
+    
+    # make empty sparse matrix
+    movie_rating_matrix = sparse.lil_matrix( (17771, (len(user_ids))), dtype=np.int8 )
+    print(movie_rating_matrix.shape)
+    
+    # iterate through data adding rating to movie matrix
+    for i in training_data:
+        movie_rating_matrix[i[0], user_ids[i[1]]] = i[2]
+    
+    # convert to condensed matrix for faster multiplication
+    movie_rating_matrix = movie_rating_matrix.tocsr()
+    
+    # call Singular Value Decomposition
+    U, sigma, Vt = svds(movie_rating_matrix.asfptype(), k_n)
+    
+    del movie_rating_matrix
+    del Vt
     
     sigma = np.diag(sigma)
 
@@ -114,6 +145,20 @@ def latent_user_input_layer(data, user_matrix, user_ids, normalized = False):
     
     return layer
 
+def MF_Layer(data, user_matrix, movie_matrix, user_ids, normalized = False):
+    if(not normalized):
+        layer = np.concatenate((user_vector(user_matrix, user_ids, data[1]),
+                               movie_vector(movie_matrix, data[0])), axis=0)
+        return layer
+    else:
+
+        layer = np.concatenate((user_vector(user_matrix, user_ids, data[1]), movie_vector(movie_matrix, data[0])), axis=0)
+        print(layer.shape)
+        
+    
+    return layer
+
+
 
 def input_layer(data, normalized = False):
     statistics = np.zeros(3,)
@@ -138,6 +183,68 @@ def input_layer(data, normalized = False):
         
     
     return layer
+                               
+def Generate_MF_Feedforward(dataset, 
+                                     batch_size, 
+                                     feature_shape, 
+                                     label_shape, 
+                                     feature_transformation_function, 
+                                     label_transformation_function, 
+                                     user_matrix,
+                                     movie_matrix,
+                                     user_ids, 
+                                     normalized = False):
+    
+    features = np.zeros((batch_size, *feature_shape))
+    labels = np.zeros((batch_size, *label_shape))
+    index_set = set(range(len(dataset)))
+    
+    while True:
+            
+        batch_indicies = []    
+        if (len(index_set) < batch_size):
+            index_set = set(range(len(dataset)))
+        #import pdb; pdb.set_trace()
+        batch_indicies = random.sample(index_set, batch_size)
+        index_set = index_set.difference(batch_indicies)
+        
+        for i, batch_index in enumerate(batch_indicies):
+            features[i] = feature_transformation_function(dataset[batch_index], user_matrix, movie_matrix, user_ids, normalized)
+            labels[i] = label_transformation_function(dataset[batch_index])
+            
+        yield (features, labels)
+        
+def Generate_MF_Feedforward_Contig(dataset, 
+                                   batch_size, 
+                                   feature_shape, 
+                                   label_shape, 
+                                   feature_transformation_function, 
+                                   label_transformation_function, 
+                                   user_matrix,
+                                   move_matrix,
+                                   user_ids,
+                                   normalized = False):
+    
+    features = np.zeros((batch_size, *feature_shape))
+    labels = np.zeros((batch_size, *label_shape))
+    index_list = list(range(len(dataset)))
+    
+    while True:
+            
+        batch_indicies = []    
+        if (len(index_list) < batch_size):
+            index_list = list(range(len(dataset)))
+        
+        #find the index of the first sample in the batch randomly    
+        batch_first_index = random.randrange(len(index_list) - batch_size - 1)
+        batch_indicies = list(range(batch_first_index, batch_first_index + batch_size))
+        index_list = [i for i in index_list if i not in batch_indicies]
+        
+        for i, batch_index in enumerate(batch_indicies):
+            features[i] = feature_transformation_function(dataset[batch_index], user_matrix, movie_matrix, user_ids, normalized)
+            labels[i] = label_transformation_function(dataset[batch_index])
+            
+        yield (features, labels)
 
 def Generate_User_Latent_Feedforward(dataset, 
                                      batch_size, 
